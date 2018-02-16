@@ -15,7 +15,6 @@ jobs:
           command: |
             go get -u github.com/mattn/goveralls
             go get -u github.com/jstemmer/go-junit-report
-            go get -u github.com/kardianos/govendor
             go get -u github.com/haya14busa/goverage
       - run:
           name: Test Results
@@ -24,7 +23,7 @@ jobs:
             mkdir -p ${CIRCLE_COVERAGE_REPORT}
       - run:
           name: Sync Dependencies
-          command: go get ./...
+          command: go get -u -v ./...
       - run:
           name: Run Tests
           command: |
