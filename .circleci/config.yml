@@ -23,7 +23,7 @@ jobs:
             mkdir -p ${CIRCLE_COVERAGE_REPORT}
       - run:
           name: Sync Dependencies
-          command: go get -u -v ./...
+          command: go get -d -u -t -f -v ./...
       - run:
           name: Run Tests
           command: |
