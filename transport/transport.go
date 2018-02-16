@@ -10,13 +10,6 @@ import (
 	tidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
-const (
-	// DefaultTransactionIDHeaderName is the standard transaction id http header name
-	DefaultTransactionIDHeaderName = "X-Request-Id"
-	// DefaultTransactionIDContextValueKey is the standard transaction id context key name
-	DefaultTransactionIDContextValueKey = "transaction_id"
-)
-
 // DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
 type DelegatingTransport struct {
 	delegate   http.RoundTripper
@@ -66,8 +59,8 @@ func (h *TIDFromContextExtension) ExtendRequest(req *http.Request) {
 		return
 	}
 
-	if header := req.Header.Get(DefaultTransactionIDHeaderName); header == "" {
-		req.Header.Set(DefaultTransactionIDHeaderName, tid)
+	if header := req.Header.Get(tidutils.TransactionIDHeader); header == "" {
+		req.Header.Set(tidutils.TransactionIDHeader, tid)
 	}
 }
 
