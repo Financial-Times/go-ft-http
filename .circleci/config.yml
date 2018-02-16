@@ -24,7 +24,7 @@ jobs:
             mkdir -p ${CIRCLE_COVERAGE_REPORT}
       - run:
           name: Sync Dependencies
-          command: go get -u
+          command: go get
       - run:
           name: Go Build
           command: go build -v
