@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Financial-Times/service-status-go/buildinfo"
+	tidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
 const (
@@ -60,8 +61,8 @@ func (h *HeaderExtension) ExtendRequest(req *http.Request) {
 
 // ExtendRequest retrieves the transaction_id from the http.Request.Context() and sets the corresponding X-Request-Id http.Header
 func (h *TIDFromContextExtension) ExtendRequest(req *http.Request) {
-	tid, ok := req.Context().Value(DefaultTransactionIDContextValueKey).(string)
-	if !ok || tid == "" {
+	tid, err := tidutils.GetTransactionIDFromContext(req.Context())
+	if err != nil {
 		return
 	}
 
