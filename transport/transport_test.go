@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	tidutils "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,7 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.expectTransactionID {
-		actual := r.Header.Get(DefaultTransactionIDHeaderName)
+		actual := r.Header.Get(tidutils.TransactionIDHeader)
 		assert.Equal(h.t, *h.transactionID, actual)
 	}
 }
@@ -78,7 +79,7 @@ func TestUserAgentIsNotOverridden(t *testing.T) {
 
 func TestTransactionIdFromContext(t *testing.T) {
 	testTransactionID := "tid_testtttt"
-	ctx := context.WithValue(context.Background(), DefaultTransactionIDContextValueKey, testTransactionID)
+	ctx := tidutils.TransactionAwareContext(context.Background(), testTransactionID)
 
 	d := NewTransport().TransactionIDFromContext()
 
