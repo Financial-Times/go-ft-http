@@ -2,7 +2,6 @@ package transport
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
@@ -47,7 +46,6 @@ func (h *HeaderExtension) ExtendRequest(req *http.Request) {
 	if val == "" {
 		req.Header.Set(h.header, h.value)
 	}
-	log.Println(val)
 }
 
 // ExtendRequest retrieves the transaction_id from the http.Request.Context() and sets the corresponding X-Request-Id http.Header
