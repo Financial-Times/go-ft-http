@@ -11,7 +11,7 @@ There are currently two extensions currently implemented:
 * `WithStandardUserAgent` which uses provided platform and system code values to append an RFC7231 compliant `User-Agent` header in the format: `PLATFORM-system-code/version`
 * `TransactionIDFromContext` will attempt to retrieve the transaction ID from the `*http.Request` context, and if it finds one will set the `X-Request-Id` header.
 
-**Important** Neither extension will modify the request, it will only add a new header if none is already set.
+**Important** Neither extension will override an existing header, it will only add a new header if none is already set.
 
 # Usage
 

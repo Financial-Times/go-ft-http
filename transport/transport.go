@@ -13,7 +13,7 @@ import (
 // DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
 type DelegatingTransport struct {
 	delegate   http.RoundTripper
-	extensions []Extension
+	extensions []HttpRequestExtension
 }
 
 // HeaderExtension adds the provided header if it has not already been set.
@@ -25,21 +25,19 @@ type HeaderExtension struct {
 // TIDFromContextExtension adds a transaction id request header if there is one available in the request.Context()
 type TIDFromContextExtension struct{}
 
-// Extension allows access to the request prior to it being executed against the delegated http.RoundTripper.
-// Extensions MUST be side-effect free, and in general should not MODIFY the request so that it could produce an unintended response.
-// For example, modifying the Host header could influence the outcome of the request, so should NOT be modified.
-// An example of an acceptable modification is adding a suitable User-Agent header if one is not already set by the client.
-type Extension interface {
+// HttpRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
+// IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
+type HttpRequestExtension interface {
 	ExtendRequest(req *http.Request)
 }
 
 // NewTransport returns a delegating transport which uses the http.DefaultTransport
 func NewTransport() *DelegatingTransport {
-	return (&DelegatingTransport{delegate: http.DefaultTransport}).TransactionIDFromContext()
+	return (&DelegatingTransport{delegate: http.DefaultTransport}).WithTransactionIDFromContext()
 }
 
 // NewUserAgentExtension creates a new HeaderExtension with the provided user agent value.
-func NewUserAgentExtension(userAgent string) Extension {
+func NewUserAgentExtension(userAgent string) HttpRequestExtension {
 	return &HeaderExtension{header: "User-Agent", value: userAgent}
 }
 
@@ -92,16 +90,16 @@ func (d *DelegatingTransport) WithStandardUserAgent(platform string, systemCode 
 	return d
 }
 
-// TransactionIDFromContext checks the request.Context() for a transaction id, and sets the corresponding X-Request-Id header if one is not already set.
-func (d *DelegatingTransport) TransactionIDFromContext() *DelegatingTransport {
+// WithTransactionIDFromContext checks the request.Context() for a transaction id, and sets the corresponding X-Request-Id header if one is not already set.
+func (d *DelegatingTransport) WithTransactionIDFromContext() *DelegatingTransport {
 	d.extensions = append(d.extensions, &TIDFromContextExtension{})
 	return d
 }
 
 func standardUserAgent(platform string, systemCode string) string {
-	return strings.ToUpper(platform) + "-" + strings.ToLower(systemCode) + "/" + versionFromBuildInfo()
+	return removeWhitespace(strings.ToUpper(platform) + "-" + strings.ToLower(systemCode) + "/" + buildinfo.GetBuildInfo().Version)
 }
 
-func versionFromBuildInfo() string {
-	return strings.Replace(buildinfo.GetBuildInfo().Version, " ", "-", -1)
+func removeWhitespace(old string) string {
+	return strings.Replace(old, " ", "-", -1)
 }

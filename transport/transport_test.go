@@ -35,9 +35,11 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(h.t, *h.userAgent, actual)
 	}
 
+	actualTID := r.Header.Get(tidutils.TransactionIDHeader)
 	if h.expectTransactionID {
-		actual := r.Header.Get(tidutils.TransactionIDHeader)
-		assert.Equal(h.t, *h.transactionID, actual)
+		assert.Equal(h.t, *h.transactionID, actualTID)
+	} else {
+		assert.Empty(h.t, actualTID)
 	}
 }
 
@@ -81,7 +83,7 @@ func TestTransactionIdFromContext(t *testing.T) {
 	testTransactionID := "tid_testtttt"
 	ctx := tidutils.TransactionAwareContext(context.Background(), testTransactionID)
 
-	d := NewTransport().TransactionIDFromContext()
+	d := NewTransport()
 
 	c := http.Client{Transport: d}
 	h := newTestHandler(t, nil, &testTransactionID)
@@ -97,7 +99,7 @@ func TestTransactionIdFromContext(t *testing.T) {
 }
 
 func TestTransactionIdFromContextNoValueInContext(t *testing.T) {
-	d := NewTransport().TransactionIDFromContext()
+	d := NewTransport()
 
 	c := http.Client{Transport: d}
 	h := &testHandler{t: t}
@@ -108,6 +110,22 @@ func TestTransactionIdFromContextNoValueInContext(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := c.Do(req.WithContext(context.Background()))
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+}
+
+func TestRequestWithNoExplicitContext(t *testing.T) {
+	d := NewTransport()
+
+	c := http.Client{Transport: d}
+	h := &testHandler{t: t}
+
+	srv := httptest.NewServer(h)
+
+	req, err := http.NewRequest("GET", srv.URL, nil)
+	require.NoError(t, err)
+
+	resp, err := c.Do(req)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
 }
