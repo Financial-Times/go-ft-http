@@ -7,7 +7,6 @@ import (
 
 	"github.com/Financial-Times/service-status-go/buildinfo"
 	tidutils "github.com/Financial-Times/transactionid-utils-go"
-	"time"
 )
 
 // DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
@@ -29,19 +28,6 @@ type TIDFromContextExtension struct{}
 // IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
 type HttpRequestExtension interface {
 	ExtendRequest(req *http.Request)
-}
-
-// NewHttpClient returns an http client with provided timeout and the FT specific transport used within.
-func HttpClientWithTimeout(timeout time.Duration) *http.Client {
-	return &http.Client{
-		Transport: NewTransport(),
-		Timeout:   timeout,
-	}
-}
-
-// NewHttpClient returns an http client with a sensible default timeout set.
-func HttpClient() *http.Client {
-	return HttpClientWithTimeout(8 * time.Second)
 }
 
 // NewTransport returns a delegating transport which uses the http.DefaultTransport
