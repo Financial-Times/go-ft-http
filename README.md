@@ -2,6 +2,11 @@
 
 Utility package for FT specific http client code.
 
+# FTHttp
+
+The fthttp package provides functions to create new `http.Client` with convenient default values for timing out and FT specific transport implementation.
+Timeout value will be taken in to account as a whole which would also cover the time spent reading the response body also.  
+
 # Transport
 
 The transport package contains an `http.RoundTripper` implementation which allows simple modifications to `http.Request` via extensions before delegating to the core lib `http.DefaultRoundTripper`.
@@ -15,6 +20,12 @@ There are currently two extensions currently implemented:
 
 # Usage
 
+## Client
+You can use `fthttp.NewClient(...)` or if you need a more customized timed out version of it via `fthttp.NewClientWithDefaultTimeout(...)`.
+
+## Transport
+If you need to use the `transport` package separately;
+ 
 Create a new `*http.Client` which sets a `User-Agent` of `PLATFORM-system-code/version` for all requests:
 
 ```

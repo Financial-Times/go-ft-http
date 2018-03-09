@@ -131,7 +131,12 @@ func TestRequestWithNoExplicitContext(t *testing.T) {
 }
 
 func TestStandardUserAgent(t *testing.T) {
-	testUserAgent := "PAC-example-system-code/Version--is-not-a-semantic-version" // Version--is-not-a-semantic-version is the default version returned from buildinfo. We can't influence the version without building with ldflags, so this will have to do.
+
+	// Version--is-not-a-semantic-version is the default version returned from buildinfo.
+	// We can't influence the version without building with ldflags,
+	// so this will have to do.
+	testUserAgent := "PAC-example-system-code/Version--is-not-a-semantic-version"
+
 	d := NewTransport().WithStandardUserAgent("PAC", "example-system-code")
 
 	c := http.Client{Transport: d}
