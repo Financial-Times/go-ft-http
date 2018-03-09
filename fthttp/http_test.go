@@ -1,4 +1,4 @@
-package http
+package fthttp
 
 import (
 	"net/http"

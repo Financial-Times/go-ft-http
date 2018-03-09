@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: /go/src/github.com/Financial-Times/go-ft-http-transport
+    working_directory: /go/src/github.com/Financial-Times/go-ft-http
     docker:
       - image: golang:1.8.3
         environment:

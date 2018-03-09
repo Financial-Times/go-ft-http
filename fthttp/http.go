@@ -1,11 +1,11 @@
-package http
+package fthttp
 
 import (
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/Financial-Times/go-ft-http-transport/transport"
+	"github.com/Financial-Times/go-ft-http/transport"
 )
 
 const defaultClientTimeout = 8 * time.Second
