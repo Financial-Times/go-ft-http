@@ -5,7 +5,9 @@ Utility package for FT specific http client code.
 # FTHttp
 
 The fthttp package provides functions to create new `http.Client` with convenient default values for timing out and FT specific transport implementation.
-Timeout value will be taken in to account as a whole which would also cover the time spent reading the response body also.  
+Timeout value will be taken in to account as a whole which would also cover the time spent reading the response body also.
+
+There is also optional logging support which is exposed via different constructor functions (`NewLoggingClient` & `NewClientWithDefaultTimeout`), currently supporting logrus logging library.
 
 # Transport
 
