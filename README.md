@@ -4,10 +4,10 @@ Utility package for FT specific http client code.
 
 # FTHttp
 
-The fthttp package provides functions to create new `http.Client` with convenient default values for timing out and FT specific transport implementation.
+The fthttp package provides builder functions to create new `http.Client`.
 Timeout value will be taken in to account as a whole which would also cover the time spent reading the response body also.
 
-There is also optional logging support which is exposed via different constructor functions (`NewLoggingClient` & `NewLoggingClientWithDefaultTimeout`), currently supporting logrus logging library.
+There is also optional logging support which is exposed via an optional building step trough the client builder, currently supporting logrus logging library.
 
 # Transport
 
@@ -23,6 +23,10 @@ There are currently two extensions currently implemented:
 # Usage
 
 ## Client
+`fthttp.NewClientBuilder` is recommended and currently supported/maintained for acquiring a new http client. 
+Builder contains both mandatory (timeout, sysInfo) and optional steps (logging etc.).  
+
+###_Deprecated functions_
 You can use `fthttp.NewClient(...)` or if you need a more customized timed out version of it via `fthttp.NewClientWithDefaultTimeout(...)`.
 
 ## Transport
