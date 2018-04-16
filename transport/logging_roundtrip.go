@@ -1,18 +1,18 @@
-package logging
+package transport
 
 import (
 	"github.com/Financial-Times/transactionid-utils-go"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
 
-type RoundTripper struct {
+type loggingRoundTripper struct {
 	L  *logrus.Logger
 	Rt http.RoundTripper
 }
 
-func (lrt *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	username := "-"
 	if req.URL.User != nil {

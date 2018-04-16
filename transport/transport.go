@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Financial-Times/go-ft-http/logging"
 	"github.com/Financial-Times/service-status-go/buildinfo"
 	tidutils "github.com/Financial-Times/transactionid-utils-go"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
@@ -40,7 +39,7 @@ func NewTransport() *DelegatingTransport {
 
 // NewTransport returns a delegating transport which uses the http.DefaultTransport
 func NewLoggingTransport(logger *logrus.Logger) *DelegatingTransport {
-	return (&DelegatingTransport{delegate: &logging.RoundTripper{L: logger, Rt: http.DefaultTransport}}).WithTransactionIDFromContext()
+	return (&DelegatingTransport{delegate: &loggingRoundTripper{L: logger, Rt: http.DefaultTransport}}).WithTransactionIDFromContext()
 }
 
 // NewUserAgentExtension creates a new HeaderExtension with the provided user agent value.
