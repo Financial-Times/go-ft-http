@@ -1,12 +1,12 @@
 package transport
 
 import (
-	"testing"
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
-	"github.com/sirupsen/logrus"
+	"github.com/Financial-Times/go-logger/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,8 +14,8 @@ func TestLoggingRoundTripper_RoundTrip(t *testing.T) {
 
 	var logBuffer bytes.Buffer
 
-	logger := logrus.New()
-	logger.Out = &logBuffer
+	log := logger.NewUPPInfoLogger("testSystemCode")
+	log.Out = &logBuffer
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -23,7 +23,7 @@ func TestLoggingRoundTripper_RoundTrip(t *testing.T) {
 
 	defer server.Close()
 
-	loggingTransport := NewLoggingTransport(logger)
+	loggingTransport := NewLoggingTransport(log)
 
 	request, _ := http.NewRequest("GET", server.URL, nil)
 
