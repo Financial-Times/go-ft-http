@@ -40,6 +40,7 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		"method":         req.Method,
 		"transaction_id": transactionID,
 		"uri":            requestUri,
+		"requestURL":     req.URL.String(),
 		"protocol":       req.Proto,
 		"referer":        req.Referer(),
 		"userAgent":      req.UserAgent(),

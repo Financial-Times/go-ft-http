@@ -3,6 +3,7 @@ package transport
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,7 +30,7 @@ func TestLoggingRoundTripper_RoundTrip(t *testing.T) {
 		"Minimum logging data": {
 			method:   http.MethodGet,
 			url:      "/testing",
-			expected: `{"level":"info", "method":"GET", "protocol":"HTTP/1.1", "service_name":"testSystemCode", "status":"200 OK", "uri":"/testing"}`,
+			expected: fmt.Sprintf(`{"level":"info", "method":"GET", "protocol":"HTTP/1.1", "service_name":"testSystemCode", "status":"200 OK", "uri":"/testing", "requestURL":"%s/testing"}`, server.URL),
 		},
 		"Extract data from headers": {
 			method: http.MethodPost,
@@ -39,7 +40,7 @@ func TestLoggingRoundTripper_RoundTrip(t *testing.T) {
 				"User-Agent":   "User agent",
 				"X-Request-Id": "KnownTransactionId",
 			},
-			expected: `{"level":"info", "method":"POST", "protocol":"HTTP/1.1", "referer":"http://example.com", "service_name":"testSystemCode", "status":"200 OK", "transaction_id":"KnownTransactionId", "uri":"/testing", "userAgent":"User agent"}`,
+			expected: fmt.Sprintf(`{"level":"info", "method":"POST", "protocol":"HTTP/1.1", "referer":"http://example.com", "service_name":"testSystemCode", "status":"200 OK", "transaction_id":"KnownTransactionId", "uri":"/testing", "userAgent":"User agent", "requestURL":"%s/testing"}`, server.URL),
 		},
 	}
 
