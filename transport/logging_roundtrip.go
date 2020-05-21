@@ -24,10 +24,10 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 
 	transactionID := transactionidutils.GetTransactionIDFromRequest(req)
 
-	requestUri := "/"
+	requestURI := "/"
 
 	if req.URL.Path != "" {
-		requestUri = req.URL.Path
+		requestURI = req.URL.Path
 	}
 
 	t := time.Now()
@@ -39,7 +39,7 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		"username":       username,
 		"method":         req.Method,
 		"transaction_id": transactionID,
-		"uri":            requestUri,
+		"uri":            requestURI,
 		"requestURL":     req.URL.String(),
 		"protocol":       req.Proto,
 		"referer":        req.Referer(),

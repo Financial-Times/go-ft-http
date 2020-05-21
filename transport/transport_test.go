@@ -58,6 +58,7 @@ func TestUserAgent(t *testing.T) {
 	resp, err := c.Do(req)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
 }
 
 func TestUserAgentIsNotOverridden(t *testing.T) {
@@ -77,6 +78,7 @@ func TestUserAgentIsNotOverridden(t *testing.T) {
 	resp, err := c.Do(req)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
 }
 
 func TestTransactionIdFromContext(t *testing.T) {
@@ -96,6 +98,7 @@ func TestTransactionIdFromContext(t *testing.T) {
 	resp, err := c.Do(req.WithContext(ctx))
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
 }
 
 func TestTransactionIdFromContextNoValueInContext(t *testing.T) {
@@ -112,6 +115,7 @@ func TestTransactionIdFromContextNoValueInContext(t *testing.T) {
 	resp, err := c.Do(req.WithContext(context.Background()))
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
 }
 
 func TestRequestWithNoExplicitContext(t *testing.T) {
@@ -128,6 +132,7 @@ func TestRequestWithNoExplicitContext(t *testing.T) {
 	resp, err := c.Do(req)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
 }
 
 func TestStandardUserAgent(t *testing.T) {
@@ -150,4 +155,5 @@ func TestStandardUserAgent(t *testing.T) {
 	resp, err := c.Do(req)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
 }

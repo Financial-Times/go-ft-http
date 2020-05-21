@@ -13,7 +13,7 @@ import (
 // DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
 type DelegatingTransport struct {
 	delegate   http.RoundTripper
-	extensions []HttpRequestExtension
+	extensions []HTTPRequestExtension
 }
 
 // HeaderExtension adds the provided header if it has not already been set.
@@ -25,9 +25,9 @@ type HeaderExtension struct {
 // TIDFromContextExtension adds a transaction id request header if there is one available in the request.Context()
 type TIDFromContextExtension struct{}
 
-// HttpRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
+// HTTPRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
 // IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
-type HttpRequestExtension interface {
+type HTTPRequestExtension interface {
 	ExtendRequest(req *http.Request)
 }
 
@@ -36,13 +36,20 @@ func NewTransport() *DelegatingTransport {
 	return (&DelegatingTransport{delegate: http.DefaultTransport}).WithTransactionIDFromContext()
 }
 
-// NewTransport returns a delegating transport which uses the http.DefaultTransport
+// NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.
+// It adds TIDFromContextExtension to the request handling and uses the http.DefaultTransport as underlining round tripper
 func NewLoggingTransport(logger *logger.UPPLogger) *DelegatingTransport {
-	return (&DelegatingTransport{delegate: &loggingRoundTripper{log: logger, tripper: http.DefaultTransport}}).WithTransactionIDFromContext()
+	t := &DelegatingTransport{
+		delegate: &loggingRoundTripper{
+			log:     logger,
+			tripper: http.DefaultTransport,
+		},
+	}
+	return t.WithTransactionIDFromContext()
 }
 
 // NewUserAgentExtension creates a new HeaderExtension with the provided user agent value.
-func NewUserAgentExtension(userAgent string) HttpRequestExtension {
+func NewUserAgentExtension(userAgent string) HTTPRequestExtension {
 	return &HeaderExtension{header: "User-Agent", value: userAgent}
 }
 
