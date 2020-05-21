@@ -3,7 +3,6 @@ package fthttp
 import (
 	"net/http"
 	"time"
-
 )
 
 const defaultClientTimeout = 8 * time.Second
@@ -28,4 +27,3 @@ func NewClientWithDefaultTimeout(platform string, systemCode string) *http.Clien
 		WithSysInfo(platform, systemCode).
 		Build()
 }
-

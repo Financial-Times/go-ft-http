@@ -1,11 +1,11 @@
 package fthttp
 
 import (
-	"time"
 	"net/http"
+	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/Financial-Times/go-ft-http/transport"
+	"github.com/Financial-Times/go-logger/v2"
 )
 
 // NewClientBuilder provides an http client (step) builder implementation
@@ -32,18 +32,18 @@ type SysInfoStep interface {
 
 // LoggingStep optional, intermediate step
 type LoggingStep interface {
-	WithLogging(logger *logrus.Logger) ClientBuilder
+	WithLogging(logger *logger.UPPLogger) ClientBuilder
 }
 
 type builder struct {
-	logger     *logrus.Logger
+	logger     *logger.UPPLogger
 	timeout    time.Duration
 	client     *http.Client
 	platform   string
 	systemCode string
 }
 
-func (cb *builder) WithLogging(logger *logrus.Logger) ClientBuilder {
+func (cb *builder) WithLogging(logger *logger.UPPLogger) ClientBuilder {
 	cb.logger = logger
 	return cb
 }
