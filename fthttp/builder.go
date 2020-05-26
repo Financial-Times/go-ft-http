@@ -66,14 +66,13 @@ func (cb *builder) Build() *http.Client {
 	}
 
 	var dt *transport.DelegatingTransport
-
 	if cb.logger != nil {
-		dt = transport.NewLoggingTransport(cb.logger)
+		dt = transport.NewTransport(
+			transport.WithLogger(cb.logger),
+			transport.WithStandardUserAgent(cb.platform, cb.systemCode))
 	} else {
-		dt = transport.NewTransport()
+		dt = transport.NewTransport(transport.WithStandardUserAgent(cb.platform, cb.systemCode))
 	}
-
-	dt = dt.WithStandardUserAgent(cb.platform, cb.systemCode)
 
 	cb.client = &http.Client{
 		Transport: dt,

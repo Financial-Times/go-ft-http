@@ -9,33 +9,32 @@ import (
 	"github.com/Financial-Times/service-status-go/buildinfo"
 )
 
-// DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
-type DelegatingTransport struct {
-	delegate   http.RoundTripper
-	extensions []HTTPRequestExtension
-}
-
 // HTTPRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
 // IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
 type HTTPRequestExtension interface {
 	ExtendRequest(req *http.Request)
 }
 
-// NewTransport returns a delegating transport which uses the http.DefaultTransport
-func NewTransport() *DelegatingTransport {
-	return (&DelegatingTransport{delegate: http.DefaultTransport}).WithTransactionIDFromContext()
+// DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
+type DelegatingTransport struct {
+	delegate   http.RoundTripper
+	extensions []HTTPRequestExtension
 }
 
-// NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.
-// It adds TIDFromContextExtension to the request handling and uses the http.DefaultTransport as underlining round tripper
-func NewLoggingTransport(logger *logger.UPPLogger) *DelegatingTransport {
-	t := &DelegatingTransport{
-		delegate: &loggingRoundTripper{
-			log:     logger,
-			tripper: http.DefaultTransport,
+type DelegateOpt func(d *DelegatingTransport)
+
+// NewTransport returns a delegating transport which uses the http.DefaultTransport
+func NewTransport(options ...DelegateOpt) *DelegatingTransport {
+	tr := &DelegatingTransport{
+		delegate: http.DefaultTransport,
+		extensions: []HTTPRequestExtension{
+			&TIDFromContextExtension{},
 		},
 	}
-	return t.WithTransactionIDFromContext()
+	for _, opt := range options {
+		opt(tr)
+	}
+	return tr
 }
 
 // RoundTrip implementation will run the *http.Request against the configured extensions, and then delegate the request to the provided http.RoundTripper
@@ -52,24 +51,39 @@ func (d *DelegatingTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return d.delegate.RoundTrip(req)
 }
 
+// NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.
+// It adds TIDFromContextExtension to the request handling and uses the http.DefaultTransport as underlining round tripper
+func WithLogger(log *logger.UPPLogger) DelegateOpt {
+	return func(d *DelegatingTransport) {
+		tr := d.delegate
+		d.delegate = &loggingRoundTripper{
+			log:     log,
+			tripper: tr,
+		}
+	}
+}
+
 // WithUserAgent appends the provided value as the User-Agent header for all requests
-func (d *DelegatingTransport) WithUserAgent(userAgent string) *DelegatingTransport {
-	ext := NewUserAgentExtension(userAgent)
-	d.extensions = append(d.extensions, ext)
-	return d
+func WithUserAgent(userAgent string) DelegateOpt {
+	return func(d *DelegatingTransport) {
+		ext := NewUserAgentExtension(userAgent)
+		d.extensions = append(d.extensions, ext)
+	}
 }
 
 // WithStandardUserAgent receives the platform and system code and appends a User-Agent header of `PLATFORM-system-code/x.x.x`. Version is retrieved from the buildinfo package.
-func (d *DelegatingTransport) WithStandardUserAgent(platform string, systemCode string) *DelegatingTransport {
-	ext := NewUserAgentExtension(standardUserAgent(platform, systemCode))
-	d.extensions = append(d.extensions, ext)
-	return d
+func WithStandardUserAgent(platform string, systemCode string) DelegateOpt {
+	return func(d *DelegatingTransport) {
+		ext := NewUserAgentExtension(standardUserAgent(platform, systemCode))
+		d.extensions = append(d.extensions, ext)
+	}
 }
 
 // WithTransactionIDFromContext checks the request.Context() for a transaction id, and sets the corresponding X-Request-Id header if one is not already set.
-func (d *DelegatingTransport) WithTransactionIDFromContext() *DelegatingTransport {
-	d.extensions = append(d.extensions, &TIDFromContextExtension{})
-	return d
+func WithTransactionIDFromContext() DelegateOpt {
+	return func(d *DelegatingTransport) {
+		d.extensions = append(d.extensions, &TIDFromContextExtension{})
+	}
 }
 
 func standardUserAgent(platform string, systemCode string) string {
