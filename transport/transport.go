@@ -7,7 +7,6 @@ import (
 
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/service-status-go/buildinfo"
-	tidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
 // DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
@@ -15,15 +14,6 @@ type DelegatingTransport struct {
 	delegate   http.RoundTripper
 	extensions []HTTPRequestExtension
 }
-
-// HeaderExtension adds the provided header if it has not already been set.
-type HeaderExtension struct {
-	header string
-	value  string
-}
-
-// TIDFromContextExtension adds a transaction id request header if there is one available in the request.Context()
-type TIDFromContextExtension struct{}
 
 // HTTPRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
 // IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
@@ -46,31 +36,6 @@ func NewLoggingTransport(logger *logger.UPPLogger) *DelegatingTransport {
 		},
 	}
 	return t.WithTransactionIDFromContext()
-}
-
-// NewUserAgentExtension creates a new HeaderExtension with the provided user agent value.
-func NewUserAgentExtension(userAgent string) HTTPRequestExtension {
-	return &HeaderExtension{header: "User-Agent", value: userAgent}
-}
-
-// ExtendRequest adds the provided header if it has not already been set.
-func (h *HeaderExtension) ExtendRequest(req *http.Request) {
-	val := req.Header.Get(h.header)
-	if val == "" {
-		req.Header.Set(h.header, h.value)
-	}
-}
-
-// ExtendRequest retrieves the transaction_id from the http.Request.Context() and sets the corresponding X-Request-Id http.Header
-func (h *TIDFromContextExtension) ExtendRequest(req *http.Request) {
-	tid, err := tidutils.GetTransactionIDFromContext(req.Context())
-	if err != nil {
-		return
-	}
-
-	if header := req.Header.Get(tidutils.TransactionIDHeader); header == "" {
-		req.Header.Set(tidutils.TransactionIDHeader, tid)
-	}
 }
 
 // RoundTrip implementation will run the *http.Request against the configured extensions, and then delegate the request to the provided http.RoundTripper
