@@ -18,18 +18,22 @@ type config struct {
 	userAgent  string
 }
 
+// WithLogging instruments the client to start producing log entries for outgoing requests
 func WithLogging(logger *logger.UPPLogger) Option {
 	return func(c *config) {
 		c.logger = logger
 	}
 }
 
+// WithTimeout sets the http.Client Timeout to the provided duration.
 func WithTimeout(timeout time.Duration) Option {
 	return func(c *config) {
 		c.timeout = timeout
 	}
 }
 
+// WithSysInfo initializes the User-Agent header in a standard "{platform}-{systemCode}/Version-{version}" format
+// When both `WithSysInfo` and `WithUserAgent` options are provided, `WithSysInfo` takes precedent.
 func WithSysInfo(platform string, systemCode string) Option {
 	return func(c *config) {
 		c.systemCode = systemCode
@@ -37,12 +41,15 @@ func WithSysInfo(platform string, systemCode string) Option {
 	}
 }
 
+// WithUserAgent initializes the User-Agent header with the provided string
+// When both `WithSysInfo` and `WithUserAgent` options are provided, `WithSysInfo` takes precedent.
 func WithUserAgent(user string) Option {
 	return func(c *config) {
 		c.userAgent = user
 	}
 }
 
+// NewClient creates a http.Client object with the provided options
 func NewClient(options ...Option) *http.Client {
 	const defaultClientTimeout = 8 * time.Second
 	c := &config{
