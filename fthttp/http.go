@@ -3,27 +3,71 @@ package fthttp
 import (
 	"net/http"
 	"time"
+
+	"github.com/Financial-Times/go-ft-http/transport"
+	"github.com/Financial-Times/go-logger/v2"
 )
 
-const defaultClientTimeout = 8 * time.Second
+type Option func(c *config)
 
-// NewHttpClient returns an http client with provided timeout and the FT specific transport used within.
-// platform and systemCode are used to be construct the FT user-agent header.
-//
-// @Deprecated, use the NewClientBuilder instead
-func NewClient(timeout time.Duration, platform string, systemCode string) *http.Client {
-	return NewClientBuilder().
-		WithTimeout(timeout).
-		WithSysInfo(platform, systemCode).
-		Build()
+type config struct {
+	logger     *logger.UPPLogger
+	timeout    time.Duration
+	platform   string
+	systemCode string
+	userAgent  string
 }
 
-// NewClientWithDefaultTimeout returns and http client with the timeout already set.
-//
-// @Deprecated, use the NewClientBuilder instead
-func NewClientWithDefaultTimeout(platform string, systemCode string) *http.Client {
-	return NewClientBuilder().
-		WithTimeout(defaultClientTimeout).
-		WithSysInfo(platform, systemCode).
-		Build()
+func WithLogging(logger *logger.UPPLogger) Option {
+	return func(c *config) {
+		c.logger = logger
+	}
+}
+
+func WithTimeout(timeout time.Duration) Option {
+	return func(c *config) {
+		c.timeout = timeout
+	}
+}
+
+func WithSysInfo(platform string, systemCode string) Option {
+	return func(c *config) {
+		c.systemCode = systemCode
+		c.platform = platform
+	}
+}
+
+func WithUserAgent(user string) Option {
+	return func(c *config) {
+		c.userAgent = user
+	}
+}
+
+func NewClient(options ...Option) *http.Client {
+	const defaultClientTimeout = 8 * time.Second
+	c := &config{
+		timeout: defaultClientTimeout,
+	}
+
+	for _, fn := range options {
+		fn(c)
+	}
+	ops := make([]transport.DelegateOpt, 0)
+	if c.logger != nil {
+		ops = append(ops, transport.WithLogger(c.logger))
+	}
+	if c.platform != "" {
+		ops = append(ops, transport.WithStandardUserAgent(c.platform, c.systemCode))
+	} else if c.userAgent != "" {
+		ops = append(ops, transport.WithUserAgent(c.userAgent))
+	}
+
+	dt := transport.NewTransport(ops...)
+
+	client := &http.Client{
+		Transport: dt,
+		Timeout:   c.timeout,
+	}
+
+	return client
 }
