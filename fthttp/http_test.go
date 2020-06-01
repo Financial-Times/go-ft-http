@@ -22,7 +22,8 @@ func TestNewClientWithLogging(t *testing.T) {
 	h := hooks.NewLocal(log.Logger)
 	defer h.Reset()
 
-	client := NewClient(WithLogging(log))
+	client, err := NewClient(WithLogging(log))
+	assert.NoError(t, err)
 
 	srv := httptest.NewServer(http.NotFoundHandler())
 	req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
@@ -75,7 +76,8 @@ func TestNewClientWithLogging(t *testing.T) {
 }
 
 func TestNewClientWithSysInfo(t *testing.T) {
-	client := NewClient(WithSysInfo("TEST", "SystemCode"))
+	client, err := NewClient(WithSysInfo("TEST", "SystemCode"))
+	assert.NoError(t, err)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 		userAgent := req.Header.Get("User-Agent")
@@ -91,7 +93,8 @@ func TestNewClientWithSysInfo(t *testing.T) {
 }
 
 func TestNewClientWithUserAgent(t *testing.T) {
-	client := NewClient(WithUserAgent("test-user-agent"))
+	client, err := NewClient(WithUserAgent("test-user-agent"))
+	assert.NoError(t, err)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, req *http.Request) {
 		userAgent := req.Header.Get("User-Agent")
@@ -107,7 +110,8 @@ func TestNewClientWithUserAgent(t *testing.T) {
 
 func TestNewClientWithTimeout(t *testing.T) {
 	testTime := time.Millisecond * 200
-	client := NewClient(WithTimeout(testTime))
+	client, err := NewClient(WithTimeout(testTime))
+	assert.NoError(t, err)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		time.Sleep(testTime * 2)

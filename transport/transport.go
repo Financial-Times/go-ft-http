@@ -24,9 +24,7 @@ func NewTransport(options ...Option) *ExtensibleTransport {
 			&TIDFromContextExtension{},
 		},
 	}
-	for _, opt := range options {
-		opt(tr)
-	}
+	tr.AddOptions(options...)
 	return tr
 }
 
@@ -37,6 +35,13 @@ func (d *ExtensibleTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	}
 
 	return d.delegate.RoundTrip(req)
+}
+
+// AddOptions provides a way to extends the current transport
+func (d *ExtensibleTransport) AddOptions(options ...Option) {
+	for _, opt := range options {
+		opt(d)
+	}
 }
 
 // NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.

@@ -1,6 +1,7 @@
 package fthttp
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -8,73 +9,70 @@ import (
 	"github.com/Financial-Times/go-logger/v2"
 )
 
-type Option func(c *config)
+var ErrWrongTransport = errors.New("expected ExtensibleTransport round tripper")
 
-type config struct {
-	logger     *logger.UPPLogger
-	timeout    time.Duration
-	platform   string
-	systemCode string
-	userAgent  string
-}
+type Option func(c *http.Client) error
 
 // WithLogging instruments the client to start producing log entries for outgoing requests
 func WithLogging(logger *logger.UPPLogger) Option {
-	return func(c *config) {
-		c.logger = logger
+	return func(c *http.Client) error {
+		tr, ok := c.Transport.(*transport.ExtensibleTransport)
+		if !ok {
+			return ErrWrongTransport
+		}
+		tr.AddOptions(transport.WithLogger(logger))
+		return nil
 	}
 }
 
 // WithTimeout sets the http.Client Timeout to the provided duration.
 func WithTimeout(timeout time.Duration) Option {
-	return func(c *config) {
-		c.timeout = timeout
+	return func(c *http.Client) error {
+		c.Timeout = timeout
+		return nil
 	}
 }
 
 // WithSysInfo initializes the User-Agent header in a standard "{platform}-{systemCode}/Version-{version}" format
 // When both `WithSysInfo` and `WithUserAgent` options are provided, `WithSysInfo` takes precedent.
 func WithSysInfo(platform string, systemCode string) Option {
-	return func(c *config) {
-		c.systemCode = systemCode
-		c.platform = platform
+	return func(c *http.Client) error {
+		tr, ok := c.Transport.(*transport.ExtensibleTransport)
+		if !ok {
+			return ErrWrongTransport
+		}
+		tr.AddOptions(transport.WithStandardUserAgent(platform, systemCode))
+		return nil
 	}
 }
 
 // WithUserAgent initializes the User-Agent header with the provided string
 // When both `WithSysInfo` and `WithUserAgent` options are provided, `WithSysInfo` takes precedent.
 func WithUserAgent(user string) Option {
-	return func(c *config) {
-		c.userAgent = user
+	return func(c *http.Client) error {
+		tr, ok := c.Transport.(*transport.ExtensibleTransport)
+		if !ok {
+			return ErrWrongTransport
+		}
+		tr.AddOptions(transport.WithUserAgent(user))
+		return nil
 	}
 }
 
 // NewClient creates a http.Client object with the provided options
-func NewClient(options ...Option) *http.Client {
+func NewClient(options ...Option) (*http.Client, error) {
 	const defaultClientTimeout = 8 * time.Second
-	c := &config{
-		timeout: defaultClientTimeout,
-	}
-
-	for _, fn := range options {
-		fn(c)
-	}
-	ops := make([]transport.Option, 0)
-	if c.logger != nil {
-		ops = append(ops, transport.WithLogger(c.logger))
-	}
-	if c.platform != "" {
-		ops = append(ops, transport.WithStandardUserAgent(c.platform, c.systemCode))
-	} else if c.userAgent != "" {
-		ops = append(ops, transport.WithUserAgent(c.userAgent))
-	}
-
-	dt := transport.NewTransport(ops...)
-
 	client := &http.Client{
-		Transport: dt,
-		Timeout:   c.timeout,
+		Transport: transport.NewTransport(),
+		Timeout:   defaultClientTimeout,
 	}
 
-	return client
+	for _, opt := range options {
+		err := opt(client)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return client, nil
 }
