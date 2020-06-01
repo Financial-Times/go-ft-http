@@ -8,12 +8,12 @@ import (
 	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
-type loggingRoundTripper struct {
-	log     *logger.UPPLogger
-	tripper http.RoundTripper
+type loggingTransport struct {
+	log       *logger.UPPLogger
+	transport http.RoundTripper
 }
 
-func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (lrt *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	username := ""
 	if req.URL.User != nil {
@@ -31,7 +31,7 @@ func (lrt *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	}
 
 	t := time.Now()
-	response, err := lrt.tripper.RoundTrip(req)
+	response, err := lrt.transport.RoundTrip(req)
 	elapsed := time.Since(t)
 
 	withFields := lrt.log.WithFields(map[string]interface{}{

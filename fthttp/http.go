@@ -59,7 +59,7 @@ func NewClient(options ...Option) *http.Client {
 	for _, fn := range options {
 		fn(c)
 	}
-	ops := make([]transport.DelegateOpt, 0)
+	ops := make([]transport.Option, 0)
 	if c.logger != nil {
 		ops = append(ops, transport.WithLogger(c.logger))
 	}

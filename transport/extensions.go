@@ -12,6 +12,12 @@ type HeaderExtension struct {
 	value  string
 }
 
+// HTTPRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
+// IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
+type HTTPRequestExtension interface {
+	ExtendRequest(req *http.Request)
+}
+
 // NewUserAgentExtension creates a new HeaderExtension with the provided user agent value.
 func NewUserAgentExtension(userAgent string) HTTPRequestExtension {
 	return &HeaderExtension{header: "User-Agent", value: userAgent}
