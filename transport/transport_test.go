@@ -61,6 +61,25 @@ func TestUserAgent(t *testing.T) {
 	_ = resp.Body.Close()
 }
 
+func TestExtensibleTransport_AddExtension(t *testing.T) {
+	testUserAgent := "PAC/blah"
+	d := NewTransport()
+	d.AddExtension(NewUserAgentExtension(testUserAgent))
+
+	c := http.Client{Transport: d}
+	h := newTestHandler(t, &testUserAgent, nil)
+
+	srv := httptest.NewServer(h)
+
+	req, err := http.NewRequest("GET", srv.URL, nil)
+	require.NoError(t, err)
+
+	resp, err := c.Do(req)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
+}
+
 func TestUserAgentIsNotOverridden(t *testing.T) {
 	testUserAgent := "EXPECTED/found"
 	d := NewTransport(WithUserAgent("NOT/found"))

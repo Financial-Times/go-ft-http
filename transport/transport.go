@@ -44,6 +44,10 @@ func (d *ExtensibleTransport) AddOptions(options ...Option) {
 	}
 }
 
+func (d *ExtensibleTransport) AddExtension(ext HTTPRequestExtension) {
+	d.extensions = append(d.extensions, ext)
+}
+
 // NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.
 // It adds TIDFromContextExtension to the request handling and uses the http.DefaultTransport as underlining transport
 func WithLogger(log *logger.UPPLogger) Option {
