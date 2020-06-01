@@ -4,30 +4,27 @@ Utility package for FT specific http client code.
 
 # FTHttp
 
-The fthttp package provides builder functions to create new `http.Client`.
-Timeout value will be taken in to account as a whole which would also cover the time spent reading the response body also.
-
-There is also optional logging support which is exposed via an optional building step trough the client builder, currently supporting logrus logging library.
+The fthttp package provides functionality to create new `http.Client` in a standardized way.
+Supported configuration options:
+* Timeout - value will be taken in to account as a whole which would also cover the time spent reading the response body.
+* Logging - will create a log entry for each request 
+* UserAgent - will add the correct user agent to the outgoing request.
 
 # Transport
 
 The transport package contains an `http.RoundTripper` implementation which allows simple modifications to `http.Request` via extensions before delegating to the core lib `http.DefaultRoundTripper`.
+It also allows the RoundTripper to be instrumented to start logging the request it makes.
 
 There are currently two extensions currently implemented:
 
 * `WithStandardUserAgent` which uses provided platform and system code values to append an RFC7231 compliant `User-Agent` header in the format: `PLATFORM-system-code/version`
 * `TransactionIDFromContext` will attempt to retrieve the transaction ID from the `*http.Request` context, and if it finds one will set the `X-Request-Id` header.
 
-**Important** Neither extension will override an existing header, it will only add a new header if none is already set.
+**Important** Neither extension will override an existing header, it will only add a new header if there is none.
+
+Initialize logging with `WithLogger` to start logging the outgoing requests.
 
 # Usage
-
-## Client
-`fthttp.NewClientBuilder` is recommended and currently supported/maintained for acquiring a new http client. 
-Builder contains both mandatory (timeout, sysInfo) and optional steps (logging etc.).  
-
-###_Deprecated functions_
-You can use `fthttp.NewClient(...)` or if you need a more customized timed out version of it via `fthttp.NewClientWithDefaultTimeout(...)`.
 
 ## Transport
 If you need to use the `transport` package separately;
@@ -45,6 +42,6 @@ Automatically set the `X-Request-Id` (see the [Transaction ID Utils Go](https://
 
 ```
 ctx := tidutils.TransactionAwareContext(context.TODO(), "tid_1234")
-req, err := http.NewRequest("GET", uri, nil)
-client.Do(req.WithContext(ctx))
+req, err := http.NewRequestWithContext(ctx,"GET", uri, nil)
+client.Do(req)
 ```

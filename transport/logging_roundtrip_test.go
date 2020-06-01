@@ -51,7 +51,7 @@ func TestLoggingRoundTripper_RoundTrip(t *testing.T) {
 			log := logger.NewUPPInfoLogger("testSystemCode")
 			log.Out = &logBuffer
 
-			loggingTransport := NewLoggingTransport(log)
+			loggingTransport := NewTransport(WithLogger(log))
 
 			req, _ := http.NewRequest(test.method, server.URL+test.url, nil)
 			for key, val := range test.headers {

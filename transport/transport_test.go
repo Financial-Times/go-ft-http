@@ -45,7 +45,26 @@ func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func TestUserAgent(t *testing.T) {
 	testUserAgent := "PAC/blah"
-	d := NewTransport().WithUserAgent(testUserAgent)
+	d := NewTransport(WithUserAgent(testUserAgent))
+
+	c := http.Client{Transport: d}
+	h := newTestHandler(t, &testUserAgent, nil)
+
+	srv := httptest.NewServer(h)
+
+	req, err := http.NewRequest("GET", srv.URL, nil)
+	require.NoError(t, err)
+
+	resp, err := c.Do(req)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	_ = resp.Body.Close()
+}
+
+func TestExtensibleTransport_AddExtension(t *testing.T) {
+	testUserAgent := "PAC/blah"
+	d := NewTransport()
+	d.AddExtension(NewUserAgentExtension(testUserAgent))
 
 	c := http.Client{Transport: d}
 	h := newTestHandler(t, &testUserAgent, nil)
@@ -63,7 +82,7 @@ func TestUserAgent(t *testing.T) {
 
 func TestUserAgentIsNotOverridden(t *testing.T) {
 	testUserAgent := "EXPECTED/found"
-	d := NewTransport().WithUserAgent("NOT/found")
+	d := NewTransport(WithUserAgent("NOT/found"))
 
 	c := http.Client{Transport: d}
 	h := newTestHandler(t, &testUserAgent, nil)
@@ -142,7 +161,7 @@ func TestStandardUserAgent(t *testing.T) {
 	// so this will have to do.
 	testUserAgent := "PAC-example-system-code/Version--is-not-a-semantic-version"
 
-	d := NewTransport().WithStandardUserAgent("PAC", "example-system-code")
+	d := NewTransport(WithStandardUserAgent("PAC", "example-system-code"))
 
 	c := http.Client{Transport: d}
 	h := newTestHandler(t, &testUserAgent, nil)

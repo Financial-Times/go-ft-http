@@ -1,85 +1,35 @@
 package transport
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/Financial-Times/go-logger/v2"
 	"github.com/Financial-Times/service-status-go/buildinfo"
-	tidutils "github.com/Financial-Times/transactionid-utils-go"
 )
 
-// DelegatingTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
-type DelegatingTransport struct {
+// ExtensibleTransport pre-processes requests with the configured Extensions, and then delegates to the provided http.RoundTripper implementation
+type ExtensibleTransport struct {
 	delegate   http.RoundTripper
 	extensions []HTTPRequestExtension
 }
 
-// HeaderExtension adds the provided header if it has not already been set.
-type HeaderExtension struct {
-	header string
-	value  string
-}
-
-// TIDFromContextExtension adds a transaction id request header if there is one available in the request.Context()
-type TIDFromContextExtension struct{}
-
-// HTTPRequestExtension allows access to the request prior to it being executed against the delegated http.RoundTripper.
-// IMPORTANT: Please read the documentation for http.RoundTripper before implementing new HttpRequestExtensions.
-type HTTPRequestExtension interface {
-	ExtendRequest(req *http.Request)
-}
+type Option func(d *ExtensibleTransport)
 
 // NewTransport returns a delegating transport which uses the http.DefaultTransport
-func NewTransport() *DelegatingTransport {
-	return (&DelegatingTransport{delegate: http.DefaultTransport}).WithTransactionIDFromContext()
-}
-
-// NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.
-// It adds TIDFromContextExtension to the request handling and uses the http.DefaultTransport as underlining round tripper
-func NewLoggingTransport(logger *logger.UPPLogger) *DelegatingTransport {
-	t := &DelegatingTransport{
-		delegate: &loggingRoundTripper{
-			log:     logger,
-			tripper: http.DefaultTransport,
+func NewTransport(options ...Option) *ExtensibleTransport {
+	tr := &ExtensibleTransport{
+		delegate: http.DefaultTransport,
+		extensions: []HTTPRequestExtension{
+			&TIDFromContextExtension{},
 		},
 	}
-	return t.WithTransactionIDFromContext()
-}
-
-// NewUserAgentExtension creates a new HeaderExtension with the provided user agent value.
-func NewUserAgentExtension(userAgent string) HTTPRequestExtension {
-	return &HeaderExtension{header: "User-Agent", value: userAgent}
-}
-
-// ExtendRequest adds the provided header if it has not already been set.
-func (h *HeaderExtension) ExtendRequest(req *http.Request) {
-	val := req.Header.Get(h.header)
-	if val == "" {
-		req.Header.Set(h.header, h.value)
-	}
-}
-
-// ExtendRequest retrieves the transaction_id from the http.Request.Context() and sets the corresponding X-Request-Id http.Header
-func (h *TIDFromContextExtension) ExtendRequest(req *http.Request) {
-	tid, err := tidutils.GetTransactionIDFromContext(req.Context())
-	if err != nil {
-		return
-	}
-
-	if header := req.Header.Get(tidutils.TransactionIDHeader); header == "" {
-		req.Header.Set(tidutils.TransactionIDHeader, tid)
-	}
+	tr.AddOptions(options...)
+	return tr
 }
 
 // RoundTrip implementation will run the *http.Request against the configured extensions, and then delegate the request to the provided http.RoundTripper
-func (d *DelegatingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if req.Header == nil {
-		defer req.Body.Close()
-		return nil, errors.New("http: nil Request.Header")
-	}
-
+func (d *ExtensibleTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	for _, e := range d.extensions {
 		e.ExtendRequest(req)
 	}
@@ -87,24 +37,43 @@ func (d *DelegatingTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return d.delegate.RoundTrip(req)
 }
 
-// WithUserAgent appends the provided value as the User-Agent header for all requests
-func (d *DelegatingTransport) WithUserAgent(userAgent string) *DelegatingTransport {
-	ext := NewUserAgentExtension(userAgent)
+// AddOptions provides a way to extends the current transport
+func (d *ExtensibleTransport) AddOptions(options ...Option) {
+	for _, opt := range options {
+		opt(d)
+	}
+}
+
+func (d *ExtensibleTransport) AddExtension(ext HTTPRequestExtension) {
 	d.extensions = append(d.extensions, ext)
-	return d
+}
+
+// NewLoggingTransport returns a delegating transport which creates log entries in the provided logger for every request.
+// It adds TIDFromContextExtension to the request handling and uses the http.DefaultTransport as underlining transport
+func WithLogger(log *logger.UPPLogger) Option {
+	return func(d *ExtensibleTransport) {
+		tr := d.delegate
+		d.delegate = &loggingTransport{
+			log:       log,
+			transport: tr,
+		}
+	}
+}
+
+// WithUserAgent appends the provided value as the User-Agent header for all requests
+func WithUserAgent(userAgent string) Option {
+	return func(d *ExtensibleTransport) {
+		ext := NewUserAgentExtension(userAgent)
+		d.extensions = append(d.extensions, ext)
+	}
 }
 
 // WithStandardUserAgent receives the platform and system code and appends a User-Agent header of `PLATFORM-system-code/x.x.x`. Version is retrieved from the buildinfo package.
-func (d *DelegatingTransport) WithStandardUserAgent(platform string, systemCode string) *DelegatingTransport {
-	ext := NewUserAgentExtension(standardUserAgent(platform, systemCode))
-	d.extensions = append(d.extensions, ext)
-	return d
-}
-
-// WithTransactionIDFromContext checks the request.Context() for a transaction id, and sets the corresponding X-Request-Id header if one is not already set.
-func (d *DelegatingTransport) WithTransactionIDFromContext() *DelegatingTransport {
-	d.extensions = append(d.extensions, &TIDFromContextExtension{})
-	return d
+func WithStandardUserAgent(platform string, systemCode string) Option {
+	return func(d *ExtensibleTransport) {
+		ext := NewUserAgentExtension(standardUserAgent(platform, systemCode))
+		d.extensions = append(d.extensions, ext)
+	}
 }
 
 func standardUserAgent(platform string, systemCode string) string {
