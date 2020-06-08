@@ -1,4 +1,4 @@
-package main
+package transport_test
 
 import (
 	"context"
@@ -7,38 +7,10 @@ import (
 	"net/http/httptest"
 	"time"
 
-	tidutils "github.com/Financial-Times/transactionid-utils-go"
-
 	"github.com/Financial-Times/go-ft-http/transport"
-
-	"github.com/Financial-Times/go-ft-http/fthttp"
 	"github.com/Financial-Times/go-logger/v2"
+	tidutils "github.com/Financial-Times/transactionid-utils-go"
 )
-
-func ExampleNewClient() {
-	log := logger.NewUPPInfoLogger("systemName")
-	timeout := time.Second
-
-	// a new client can be created by calling NewClient with desired options
-	// see fthttp/client.go for full list of supported standard options
-	client, err := fthttp.NewClient(
-		fthttp.WithLogging(log),
-		fthttp.WithTimeout(timeout),
-		fthttp.WithSysInfo("PLATFORM", "system-code"))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req, cleanup := getDummyRequest()
-	defer cleanup()
-
-	resp, _ := client.Do(req)
-	defer resp.Body.Close() //nolint:govet
-
-	fmt.Println(resp.Status)
-	// Output: 404 Not Found
-}
 
 func ExampleNewTransport() {
 	log := logger.NewUPPInfoLogger("systemName")
