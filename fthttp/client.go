@@ -60,7 +60,6 @@ func WithUserAgent(user string) Option {
 }
 
 // NewClient creates a http.Client object with the provided options
-// If an option fails the produced error would be propagated to the caller of NewClient
 func NewClient(options ...Option) (*http.Client, error) {
 	const defaultClientTimeout = 8 * time.Second
 	client := &http.Client{

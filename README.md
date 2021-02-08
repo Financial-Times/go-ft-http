@@ -26,14 +26,22 @@ Initialize logging with `WithLogger` to start logging the outgoing requests.
 
 # Usage
 
-## HTTP Client
-
-For examples how to create new fthttp client refer to `examples_test.go`
-
 ## Transport
+If you need to use the `transport` package separately;
+ 
+Create a new `*http.Client` which sets a `User-Agent` of `PLATFORM-system-code/version` for all requests:
 
-For examples how to use `transport.ExtensibleTransport` refer to the examples in `examples_test.go`
+```
+trans := transport.NewTransport().WithStandardUserAgent("PLATFORM", "system-code")
+client := &http.Client{Transport: trans}
+```
 
-# Notable Dependencies
+`NewTransport()` assumes you would like to use the default `http.DefaultRoundTripper`, and the `TransactionIDFromContext` extension.
 
-*  [go-logger v2](https://github.com/Financial-Times/go-logger)
+Automatically set the `X-Request-Id` (see the [Transaction ID Utils Go](https://github.com/Financial-Times/transactionid-utils-go) library for more details):
+
+```
+ctx := tidutils.TransactionAwareContext(context.TODO(), "tid_1234")
+req, err := http.NewRequestWithContext(ctx,"GET", uri, nil)
+client.Do(req)
+```
