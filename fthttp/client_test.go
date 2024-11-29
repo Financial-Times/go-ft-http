@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger/v2"
-	transactionidutils "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	hooks "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
+
+const transactionIDKey string = "transaction_id"
 
 func TestNewClientWithLogging(t *testing.T) {
 	log := logger.NewUPPLogger("test", "info")
@@ -38,16 +39,16 @@ func TestNewClientWithLogging(t *testing.T) {
 	assert.NoError(t, err)
 
 	expected := map[string]interface{}{
-		"level":                             "info",
-		"method":                            "GET",
-		"protocol":                          "HTTP/1.1",
-		"requestURL":                        srv.URL,
-		"service_name":                      "test",
-		"status":                            "404 Not Found",
-		"uri":                               "/",
-		transactionidutils.TransactionIDKey: "ignored",
-		logger.DefaultKeyTime:               "ignored",
-		"responsetime":                      "ignored",
+		"level":               "info",
+		"method":              "GET",
+		"protocol":            "HTTP/1.1",
+		"requestURL":          srv.URL,
+		"service_name":        "test",
+		"status":              "404 Not Found",
+		"uri":                 "/",
+		transactionIDKey:      "ignored",
+		logger.DefaultKeyTime: "ignored",
+		"responsetime":        "ignored",
 	}
 
 	fields := map[string]interface{}{}
@@ -55,9 +56,9 @@ func TestNewClientWithLogging(t *testing.T) {
 	assert.NoError(t, err)
 
 	specialFields := map[string]bool{
-		transactionidutils.TransactionIDKey: true,
-		logger.DefaultKeyTime:               true,
-		"responsetime":                      true,
+		transactionIDKey:      true,
+		logger.DefaultKeyTime: true,
+		"responsetime":        true,
 	}
 
 	for key := range specialFields {
